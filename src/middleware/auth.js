@@ -29,9 +29,19 @@ function loadUserToLocals(req, res, next) {
       username: req.session.username,
       role: req.session.role,
       displayName: req.session.displayName || req.session.username,
+      mustChangePassword: Boolean(req.session.mustChangePassword),
     };
   }
   next();
 }
 
-module.exports = { requireAuth, requireRole, loadUserToLocals };
+function requirePasswordChanged(req, res, next) {
+  if (!req.session || !req.session.userId) return res.redirect('/login');
+  if (!req.session.mustChangePassword) return next();
+
+  const allow = ['/account/password', '/logout'];
+  if (allow.includes(req.path)) return next();
+  return res.redirect('/account/password');
+}
+
+module.exports = { requireAuth, requireRole, loadUserToLocals, requirePasswordChanged };

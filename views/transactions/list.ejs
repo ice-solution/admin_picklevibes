@@ -7,7 +7,15 @@
   <a href="/transactions/new" class="inline-flex rounded-xl bg-brand-pink px-4 py-2 text-sm font-semibold text-white shadow-md shadow-brand-pink/25 hover:brightness-110">新增紀錄</a>
 </div>
 
-<form method="get" class="mb-6 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-5 md:items-end">
+<form method="get" class="mb-6 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-6 md:items-end">
+  <div>
+    <label class="block text-xs font-medium text-slate-600">店舖</label>
+    <select name="store" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm">
+      <% (stores || []).forEach(function (s) { %>
+      <option value="<%= s._id %>" <%= filters.store === String(s._id) ? 'selected' : '' %>><%= s.name %></option>
+      <% }); %>
+    </select>
+  </div>
   <div>
     <label class="block text-xs font-medium text-slate-600">類型</label>
     <select name="type" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm">
@@ -33,7 +41,7 @@
       <% }); %>
     </select>
   </div>
-  <div class="flex gap-2 md:col-span-5">
+  <div class="flex gap-2 md:col-span-6">
     <button type="submit" class="rounded-lg bg-brand-cyan px-4 py-2 text-sm font-medium text-white hover:brightness-110">篩選</button>
     <a href="/transactions" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">重設</a>
   </div>
@@ -50,6 +58,7 @@
     <thead class="bg-slate-50 text-xs font-medium uppercase text-slate-500">
       <tr>
         <th class="px-3 py-3">日期</th>
+        <th class="px-3 py-3">店舖</th>
         <th class="px-3 py-3">類型</th>
         <th class="px-3 py-3">類別</th>
         <th class="px-3 py-3 text-right">金額</th>
@@ -60,32 +69,33 @@
     </thead>
     <tbody class="divide-y divide-slate-100">
       <% if (!items.length) { %>
-      <tr><td colspan="7" class="px-4 py-10 text-center text-slate-500">沒有符合的紀錄。</td></tr>
+        <tr><td colspan="8" class="px-4 py-10 text-center text-slate-500">沒有符合的紀錄。</td></tr>
       <% } %>
       <% items.forEach(function (r) { %>
-      <tr class="hover:bg-slate-50/80">
-        <td class="whitespace-nowrap px-3 py-3"><%= new Date(r.date).toLocaleDateString('zh-Hant-HK') %></td>
-        <td class="px-3 py-3">
-          <% if (r.type === 'income') { %><span class="rounded-full bg-brand-cyan/15 px-2 py-0.5 text-xs font-medium text-brand-cyan">收入</span><% } else { %><span class="rounded-full bg-brand-pink/15 px-2 py-0.5 text-xs font-medium text-brand-pink">支出</span><% } %>
-        </td>
-        <td class="max-w-[10rem] truncate px-3 py-3" title="<%= r.category %>"><%= r.category %></td>
-        <td class="px-3 py-3 text-right font-medium <%= r.type === 'income' ? 'text-brand-cyan' : 'text-brand-pink' %>"><%= r.amount.toLocaleString('zh-Hant-HK', { minimumFractionDigits: 2 }) %></td>
-        <td class="px-3 py-3">
-          <% if (r.imagePath) { %>
-          <a href="<%= r.imagePath %>" target="_blank" rel="noopener" class="text-brand-cyan underline hover:text-brand-pink">查看</a>
-          <% } else { %><span class="text-slate-400">—</span><% } %>
-        </td>
-        <td class="px-3 py-3 text-slate-600"><%= r.createdBy && r.createdBy.username ? r.createdBy.username : '—' %></td>
-        <td class="whitespace-nowrap px-3 py-3 text-right">
-          <% var canEdit = currentUser.role === 'admin' || (r.createdBy && r.createdBy._id && r.createdBy._id.toString() === currentUser.id); %>
-          <% if (canEdit) { %>
-          <a href="/transactions/<%= r._id %>/edit" class="text-brand-cyan hover:underline">編輯</a>
-          <form action="/transactions/<%= r._id %>/delete" method="post" class="inline ml-2" onsubmit="return confirm('確定刪除此筆紀錄？');">
-            <button type="submit" class="text-red-600 hover:underline">刪除</button>
-          </form>
-          <% } else { %><span class="text-slate-400">—</span><% } %>
-        </td>
-      </tr>
+        <tr class="hover:bg-slate-50/80">
+          <td class="whitespace-nowrap px-3 py-3"><%= new Date(r.date).toLocaleDateString('zh-Hant-HK') %></td>
+          <td class="px-3 py-3 text-slate-700"><%= r.store && r.store.name ? r.store.name : '—' %></td>
+          <td class="px-3 py-3">
+            <% if (r.type === 'income') { %><span class="rounded-full bg-brand-cyan/15 px-2 py-0.5 text-xs font-medium text-brand-cyan">收入</span><% } else { %><span class="rounded-full bg-brand-pink/15 px-2 py-0.5 text-xs font-medium text-brand-pink">支出</span><% } %>
+          </td>
+          <td class="max-w-[10rem] truncate px-3 py-3" title="<%= r.category %>"><%= r.category %></td>
+          <td class="px-3 py-3 text-right font-medium <%= r.type === 'income' ? 'text-brand-cyan' : 'text-brand-pink' %>"><%= r.amount.toLocaleString('zh-Hant-HK', { minimumFractionDigits: 2 }) %></td>
+          <td class="px-3 py-3">
+            <% if (r.imagePath) { %>
+              <a href="<%= r.imagePath %>" target="_blank" rel="noopener" class="text-brand-cyan underline hover:text-brand-pink">查看</a>
+            <% } else { %><span class="text-slate-400">—</span><% } %>
+          </td>
+          <td class="px-3 py-3 text-slate-600"><%= r.createdBy && r.createdBy.username ? r.createdBy.username : '—' %></td>
+          <td class="whitespace-nowrap px-3 py-3 text-right">
+            <% var canEdit = currentUser.role === 'admin' || (r.createdBy && r.createdBy._id && r.createdBy._id.toString() === currentUser.id); %>
+            <% if (canEdit) { %>
+              <a href="/transactions/<%= r._id %>/edit" class="text-brand-cyan hover:underline">編輯</a>
+              <form action="/transactions/<%= r._id %>/delete" method="post" class="inline ml-2" onsubmit="return confirm('確定刪除此筆紀錄？');">
+                <button type="submit" class="text-red-600 hover:underline">刪除</button>
+              </form>
+            <% } else { %><span class="text-slate-400">—</span><% } %>
+          </td>
+        </tr>
       <% }); %>
     </tbody>
   </table>

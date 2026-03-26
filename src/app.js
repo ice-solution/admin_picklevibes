@@ -5,12 +5,14 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
 
-const { ensureDefaultAdmin } = require('./config/seed');
-const { requireAuth, requireRole, loadUserToLocals } = require('./middleware/auth');
+const { ensureDefaultAdmin, ensureDefaultStore } = require('./config/seed');
+const { requireAuth, requireRole, loadUserToLocals, requirePasswordChanged } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
+const accountRoutes = require('./routes/account');
 const dashboardRoutes = require('./routes/dashboard');
 const transactionRoutes = require('./routes/transactions');
 const userRoutes = require('./routes/users');
+const settingsRoutes = require('./routes/settings');
 
 const PORT = Number(process.env.PORT) || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/picklevibes_admin';
@@ -60,9 +62,12 @@ app.use(loadUserToLocals);
 app.use(authRoutes);
 
 app.use(requireAuth);
+app.use(accountRoutes);
+app.use(requirePasswordChanged);
 app.use('/', dashboardRoutes);
 app.use('/transactions', transactionRoutes);
 app.use('/users', requireRole('admin'), userRoutes);
+app.use(requireRole('admin'), settingsRoutes);
 
 app.use((req, res) => {
   res.status(404).render('error', { title: '找不到頁面', message: '此頁面不存在。' });
@@ -81,6 +86,7 @@ async function start() {
   await mongoose.connect(MONGODB_URI);
   console.log('[db] connected');
   await ensureDefaultAdmin();
+  await ensureDefaultStore();
 
   app.listen(PORT, () => {
     console.log(`[server] http://127.0.0.1:${PORT}`);

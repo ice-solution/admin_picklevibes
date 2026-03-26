@@ -4,6 +4,7 @@ const TYPES = ['income', 'expense'];
 
 const transactionSchema = new mongoose.Schema(
   {
+    store: { type: mongoose.Schema.Types.ObjectId, ref: 'Store', required: true },
     type: { type: String, enum: TYPES, required: true },
     amount: { type: Number, required: true, min: 0 },
     date: { type: Date, required: true },

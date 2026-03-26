@@ -4,6 +4,7 @@ const fs = require('fs');
 const multer = require('multer');
 const Transaction = require('../models/Transaction');
 const { CATEGORIES, isAllowedCategory, isValidCategoryForUpdate } = require('../config/categories');
+const Store = require('../models/Store');
 
 const router = express.Router();
 
@@ -38,10 +39,18 @@ function parseDate(input) {
 }
 
 router.get('/', async (req, res) => {
-  const { type, from, to, category } = req.query;
+  const { type, from, to, category, store } = req.query;
+
+  const stores = await Store.find({ active: true }).sort({ name: 1 }).lean();
+  const storeParamRequested = store && String(store).trim() ? String(store).trim() : '';
+  const activeStoreIds = new Set(stores.map((s) => String(s._id)));
+  const storeParam = storeParamRequested && activeStoreIds.has(storeParamRequested) ? storeParamRequested : (stores[0] ? String(stores[0]._id) : '');
+
   const q = {};
   if (type === 'income' || type === 'expense') q.type = type;
   if (category && String(category).trim()) q.category = String(category).trim();
+  if (storeParam) q.store = storeParam;
+
   if (from || to) {
     q.date = {};
     if (from) q.date.$gte = new Date(from);
@@ -52,7 +61,13 @@ router.get('/', async (req, res) => {
     }
   }
 
-  const items = await Transaction.find(q).sort({ date: -1, createdAt: -1 }).populate('createdBy', 'username displayName').lean();
+  const items = storeParam
+    ? await Transaction.find(q)
+        .sort({ date: -1, createdAt: -1 })
+        .populate('createdBy', 'username displayName')
+        .populate('store', 'name active')
+        .lean()
+    : [];
 
   const totals = items.reduce(
     (acc, row) => {
@@ -67,18 +82,21 @@ router.get('/', async (req, res) => {
     title: '單據與收支',
     activeNav: 'tx',
     categories: CATEGORIES,
+    stores,
     items,
     totals,
     net: totals.income - totals.expense,
-    filters: { type: type || '', from: from || '', to: to || '', category: category || '' },
+    filters: { type: type || '', from: from || '', to: to || '', category: category || '', store: storeParam },
   });
 });
 
-router.get('/new', (_req, res) => {
+router.get('/new', async (_req, res) => {
+  const stores = await Store.find({ active: true }).sort({ name: 1 }).lean();
   res.render('transactions/form', {
     title: '新增紀錄',
     activeNav: 'tx',
     categories: CATEGORIES,
+    stores,
     action: '/transactions',
     method: 'POST',
     tx: null,
@@ -87,9 +105,25 @@ router.get('/new', (_req, res) => {
 });
 
 router.post('/', upload.single('receipt'), async (req, res) => {
-  const { type, amount, date, category, note } = req.body;
+  const { store, type, amount, date, category, note } = req.body;
   const amt = parseFloat(String(amount).replace(/,/g, ''), 10);
   const d = parseDate(date);
+
+  const stores = await Store.find({ active: true }).sort({ name: 1 }).lean();
+  const storeDoc = store ? await Store.findById(String(store)) : null;
+  if (!storeDoc || !storeDoc.active) {
+    if (req.file) fs.unlink(req.file.path, () => {});
+    return res.status(400).render('transactions/form', {
+      title: '新增紀錄',
+      activeNav: 'tx',
+      categories: CATEGORIES,
+      stores,
+      action: '/transactions',
+      method: 'POST',
+      tx: req.body,
+      error: '請選擇店舖',
+    });
+  }
 
   if (!type || !['income', 'expense'].includes(type)) {
     if (req.file) fs.unlink(req.file.path, () => {});
@@ -97,6 +131,7 @@ router.post('/', upload.single('receipt'), async (req, res) => {
       title: '新增紀錄',
       activeNav: 'tx',
       categories: CATEGORIES,
+      stores,
       action: '/transactions',
       method: 'POST',
       tx: req.body,
@@ -109,6 +144,7 @@ router.post('/', upload.single('receipt'), async (req, res) => {
       title: '新增紀錄',
       activeNav: 'tx',
       categories: CATEGORIES,
+      stores,
       action: '/transactions',
       method: 'POST',
       tx: req.body,
@@ -121,6 +157,7 @@ router.post('/', upload.single('receipt'), async (req, res) => {
       title: '新增紀錄',
       activeNav: 'tx',
       categories: CATEGORIES,
+      stores,
       action: '/transactions',
       method: 'POST',
       tx: req.body,
@@ -133,6 +170,7 @@ router.post('/', upload.single('receipt'), async (req, res) => {
       title: '新增紀錄',
       activeNav: 'tx',
       categories: CATEGORIES,
+      stores,
       action: '/transactions',
       method: 'POST',
       tx: req.body,
@@ -146,6 +184,7 @@ router.post('/', upload.single('receipt'), async (req, res) => {
   }
 
   await Transaction.create({
+    store: storeDoc._id,
     type,
     amount: amt,
     date: d,
@@ -159,16 +198,18 @@ router.post('/', upload.single('receipt'), async (req, res) => {
 });
 
 router.get('/:id/edit', async (req, res) => {
-  const tx = await Transaction.findById(req.params.id).lean();
+  const tx = await Transaction.findById(req.params.id).populate('store', 'name active').lean();
   if (!tx) return res.status(404).render('error', { title: '找不到', message: '紀錄不存在。' });
   const can =
     req.session.role === 'admin' || tx.createdBy.toString() === req.session.userId;
   if (!can) return res.status(403).render('error', { title: '無權限', message: '無法編輯此紀錄。' });
 
+  const stores = await Store.find({ active: true }).sort({ name: 1 }).lean();
   res.render('transactions/form', {
     title: '編輯紀錄',
     activeNav: 'tx',
     categories: CATEGORIES,
+    stores,
     action: `/transactions/${tx._id}/update`,
     method: 'POST',
     tx,
@@ -188,9 +229,27 @@ router.post('/:id/update', upload.single('receipt'), async (req, res) => {
     return res.status(403).render('error', { title: '無權限', message: '無法編輯此紀錄。' });
   }
 
-  const { type, amount, date, category, note } = req.body;
+  const { store, type, amount, date, category, note } = req.body;
   const amt = parseFloat(String(amount).replace(/,/g, ''), 10);
   const d = parseDate(date);
+
+  const stores = await Store.find({ active: true }).sort({ name: 1 }).lean();
+  const selectedStore = store ? await Store.findById(String(store)) : null;
+  const isSameStore = selectedStore && tx.store && selectedStore._id.toString() === tx.store.toString();
+  const isValidStore = selectedStore && (selectedStore.active || isSameStore);
+  if (!isValidStore) {
+    if (req.file) fs.unlink(req.file.path, () => {});
+    return res.status(400).render('transactions/form', {
+      title: '編輯紀錄',
+      activeNav: 'tx',
+      categories: CATEGORIES,
+      stores,
+      action: `/transactions/${tx._id}/update`,
+      method: 'POST',
+      tx: { ...tx.toObject(), ...req.body, store: req.body.store },
+      error: '請選擇店舖',
+    });
+  }
 
   if (!type || !['income', 'expense'].includes(type)) {
     if (req.file) fs.unlink(req.file.path, () => {});
@@ -198,9 +257,10 @@ router.post('/:id/update', upload.single('receipt'), async (req, res) => {
       title: '編輯紀錄',
       activeNav: 'tx',
       categories: CATEGORIES,
+      stores,
       action: `/transactions/${tx._id}/update`,
       method: 'POST',
-      tx: { ...tx.toObject(), ...req.body },
+      tx: { ...tx.toObject(), ...req.body, store: req.body.store },
       error: '請選擇收入或支出',
     });
   }
@@ -210,9 +270,10 @@ router.post('/:id/update', upload.single('receipt'), async (req, res) => {
       title: '編輯紀錄',
       activeNav: 'tx',
       categories: CATEGORIES,
+      stores,
       action: `/transactions/${tx._id}/update`,
       method: 'POST',
-      tx: { ...tx.toObject(), ...req.body },
+      tx: { ...tx.toObject(), ...req.body, store: req.body.store },
       error: '金額無效',
     });
   }
@@ -222,9 +283,10 @@ router.post('/:id/update', upload.single('receipt'), async (req, res) => {
       title: '編輯紀錄',
       activeNav: 'tx',
       categories: CATEGORIES,
+      stores,
       action: `/transactions/${tx._id}/update`,
       method: 'POST',
-      tx: { ...tx.toObject(), ...req.body },
+      tx: { ...tx.toObject(), ...req.body, store: req.body.store },
       error: '日期無效',
     });
   }
@@ -234,9 +296,10 @@ router.post('/:id/update', upload.single('receipt'), async (req, res) => {
       title: '編輯紀錄',
       activeNav: 'tx',
       categories: CATEGORIES,
+      stores,
       action: `/transactions/${tx._id}/update`,
       method: 'POST',
-      tx: { ...tx.toObject(), ...req.body },
+      tx: { ...tx.toObject(), ...req.body, store: req.body.store },
       error: '請從清單選擇類別',
     });
   }
@@ -249,6 +312,7 @@ router.post('/:id/update', upload.single('receipt'), async (req, res) => {
     tx.imagePath = `/uploads/receipts/${req.file.filename}`;
   }
 
+  tx.store = selectedStore._id;
   tx.type = type;
   tx.amount = amt;
   tx.date = d;

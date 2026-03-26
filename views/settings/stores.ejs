@@ -1,0 +1,55 @@
+<%- include('../partials/shell-open') %>
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">店舖設定</h1>
+  <p class="text-sm text-slate-500">新增/停用店舖。交易紀錄只允許選取啟用中的店舖。</p>
+</div>
+
+<% if (error) { %>
+<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"><%= error %></div>
+<% } %>
+
+<div class="grid gap-8 lg:grid-cols-2">
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-800">新增店舖</h2>
+    <form action="/settings/stores" method="post" class="mt-4 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700">店舖名稱</label>
+        <input name="name" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </div>
+      <button type="submit" class="rounded-xl bg-brand-yellow px-5 py-2.5 font-semibold text-slate-900 shadow hover:brightness-105">建立</button>
+    </form>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white p-0 shadow-sm overflow-hidden">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
+        <tr>
+          <th class="px-4 py-3">店舖</th>
+          <th class="px-4 py-3">狀態</th>
+          <th class="px-4 py-3 text-right">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% stores.forEach(function (s) { %>
+        <tr>
+          <td class="px-4 py-3 font-medium text-slate-800"><%= s.name %></td>
+          <td class="px-4 py-3">
+            <% if (s.active) { %>
+              <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">啟用</span>
+            <% } else { %>
+              <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">停用</span>
+            <% } %>
+          </td>
+          <td class="px-4 py-3 text-right">
+            <form action="/settings/stores/<%= s._id %>/toggle" method="post" class="inline">
+              <button type="submit" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"><%= s.active ? '停用' : '啟用' %></button>
+            </form>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/shell-close') %>
+

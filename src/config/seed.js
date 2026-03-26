@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const Store = require('../models/Store');
 
 async function ensureDefaultAdmin() {
   const count = await User.countDocuments();
@@ -14,10 +15,19 @@ async function ensureDefaultAdmin() {
     passwordHash,
     role: 'admin',
     displayName: 'Administrator',
+    mustChangePassword: true,
   });
 
   console.log(`[seed] Created default admin user: ${username}`);
   return admin;
 }
 
-module.exports = { ensureDefaultAdmin };
+async function ensureDefaultStore() {
+  const count = await Store.countDocuments();
+  if (count > 0) return null;
+  const s = await Store.create({ name: '主店', active: true });
+  console.log('[seed] Created default store: 主店');
+  return s;
+}
+
+module.exports = { ensureDefaultAdmin, ensureDefaultStore };

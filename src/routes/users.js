@@ -33,6 +33,7 @@ router.post('/', async (req, res) => {
     passwordHash,
     role: r,
     displayName: displayName ? String(displayName).trim() : '',
+    mustChangePassword: true,
   });
   res.redirect('/users');
 });

@@ -14,6 +14,9 @@
     <a href="/users" class="flex items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-brand-yellow/20 hover:text-slate-900 <%= typeof activeNav !== 'undefined' && activeNav === 'users' ? 'bg-brand-yellow/25 text-slate-900' : '' %>">
       <span>使用者</span>
     </a>
+    <a href="/settings/stores" class="flex items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 <%= typeof activeNav !== 'undefined' && activeNav === 'settings' ? 'bg-slate-100 text-slate-900' : '' %>">
+      <span>設定</span>
+    </a>
     <% } %>
   </nav>
   <div class="shrink-0 border-t border-slate-100 p-3 text-xs text-slate-500">

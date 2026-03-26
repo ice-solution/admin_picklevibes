@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ROLES, default: 'user' },
     displayName: { type: String, trim: true, default: '' },
+    mustChangePassword: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

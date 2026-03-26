@@ -37,7 +37,9 @@ router.post('/login', async (req, res) => {
   req.session.username = user.username;
   req.session.role = user.role;
   req.session.displayName = user.displayName || user.username;
+  req.session.mustChangePassword = Boolean(user.mustChangePassword);
 
+  if (req.session.mustChangePassword) return res.redirect('/account/password');
   return res.redirect(safeReturn);
 });
 
