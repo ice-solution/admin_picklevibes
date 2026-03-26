@@ -1,0 +1,27 @@
+<aside class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full transform flex-col border-r border-slate-200 bg-white shadow-sm transition-transform lg:translate-x-0" id="sidebar">
+  <div class="flex h-16 shrink-0 items-center gap-2 border-b border-slate-100 px-4 bg-gradient-to-r from-brand-pink/10 to-brand-cyan/10">
+    <img src="/images/logo.png" alt="Pickle Vibes" class="h-10 w-auto object-contain" />
+    <span class="text-sm font-semibold text-slate-800">管理後台</span>
+  </div>
+  <nav class="flex-1 space-y-1 overflow-y-auto p-3 pb-4 text-sm">
+    <a href="/" class="flex items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-brand-pink/10 hover:text-brand-pink <%= typeof activeNav !== 'undefined' && activeNav === 'home' ? 'bg-brand-pink/15 text-brand-pink' : '' %>">
+      <span>總覽</span>
+    </a>
+    <a href="/transactions" class="flex items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-brand-cyan/10 hover:text-brand-cyan <%= typeof activeNav !== 'undefined' && activeNav === 'tx' ? 'bg-brand-cyan/15 text-brand-cyan' : '' %>">
+      <span>單據與收支</span>
+    </a>
+    <% if (currentUser && currentUser.role === 'admin') { %>
+    <a href="/users" class="flex items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-brand-yellow/20 hover:text-slate-900 <%= typeof activeNav !== 'undefined' && activeNav === 'users' ? 'bg-brand-yellow/25 text-slate-900' : '' %>">
+      <span>使用者</span>
+    </a>
+    <% } %>
+  </nav>
+  <div class="shrink-0 border-t border-slate-100 p-3 text-xs text-slate-500">
+    <div class="truncate font-medium text-slate-700"><%= currentUser ? currentUser.displayName : '' %></div>
+    <div class="truncate text-slate-400"><%= currentUser ? currentUser.username : '' %> · <%= currentUser ? currentUser.role : '' %></div>
+    <form action="/logout" method="post" class="mt-2">
+      <button type="submit" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left text-slate-600 hover:border-brand-pink hover:text-brand-pink">登出</button>
+    </form>
+  </div>
+</aside>
+<div class="fixed inset-0 z-30 bg-black/30 lg:hidden hidden" id="sidebar-backdrop" aria-hidden="true"></div>

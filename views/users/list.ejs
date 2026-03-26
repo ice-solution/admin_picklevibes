@@ -1,0 +1,66 @@
+<%- include('../partials/shell-open') %>
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900">使用者管理</h1>
+  <p class="text-sm text-slate-500">僅管理員可新增帳號與調整角色（admin / user）。</p>
+</div>
+
+<% if (error) { %>
+<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"><%= error %></div>
+<% } %>
+
+<div class="grid gap-8 lg:grid-cols-2">
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-800">新增使用者</h2>
+    <form action="/users" method="post" class="mt-4 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700">帳號</label>
+        <input name="username" required autocomplete="off" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">密碼</label>
+        <input name="password" type="password" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">顯示名稱（選填）</label>
+        <input name="displayName" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">角色</label>
+        <select name="role" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          <option value="user">user</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+      <button type="submit" class="rounded-xl bg-brand-yellow px-5 py-2.5 font-semibold text-slate-900 shadow hover:brightness-105">建立</button>
+    </form>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white p-0 shadow-sm overflow-hidden">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
+        <tr>
+          <th class="px-4 py-3">帳號</th>
+          <th class="px-4 py-3">顯示名稱</th>
+          <th class="px-4 py-3">角色</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% users.forEach(function (u) { %>
+        <tr>
+          <td class="px-4 py-3 font-medium text-slate-800"><%= u.username %></td>
+          <td class="px-4 py-3 text-slate-600"><%= u.displayName || '—' %></td>
+          <td class="px-4 py-3">
+            <form action="/users/<%= u._id %>/role" method="post" class="flex items-center gap-2">
+              <select name="role" class="rounded-lg border border-slate-300 px-2 py-1 text-sm" onchange="this.form.submit()">
+                <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>user</option>
+                <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>admin</option>
+              </select>
+            </form>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/shell-close') %>

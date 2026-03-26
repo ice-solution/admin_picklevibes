@@ -1,0 +1,57 @@
+<%- include('../partials/shell-open') %>
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-900"><%= title %></h1>
+  <p class="text-sm text-slate-500">類型與類別請從清單選擇；可選擇性上傳單據圖片。</p>
+</div>
+
+<% if (error) { %>
+<div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"><%= error %></div>
+<% } %>
+
+<form action="<%= action %>" method="<%= method %>" enctype="multipart/form-data" class="max-w-xl space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+  <div>
+    <label class="block text-sm font-medium text-slate-700">類型</label>
+    <select name="type" required class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/30">
+      <option value="income" <%= !tx || tx.type === 'income' ? 'selected' : '' %>>收入</option>
+      <option value="expense" <%= tx && tx.type === 'expense' ? 'selected' : '' %>>支出</option>
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-slate-700">金額（HKD）</label>
+    <input name="amount" type="text" inputmode="decimal" required value="<%= tx && tx.amount != null ? tx.amount : '' %>" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/30" placeholder="0.00" />
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-slate-700">日期</label>
+    <input name="date" type="date" required value="<%= tx && tx.date ? new Date(tx.date).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10) %>" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/30" />
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-slate-700">類別</label>
+    <select name="category" required class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/30">
+      <% if (!tx) { %>
+      <option value="" selected disabled>請選擇類別</option>
+      <% } %>
+      <% categories.forEach(function (c) { %>
+      <option value="<%= c %>" <%= tx && tx.category === c ? 'selected' : '' %>><%= c %></option>
+      <% }); %>
+      <% if (tx && tx.category && categories.indexOf(tx.category) === -1) { %>
+      <option value="<%= tx.category %>" selected><%= tx.category %>（舊資料，請改選清單）</option>
+      <% } %>
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-slate-700">備註（選填）</label>
+    <textarea name="note" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/30"><%= tx && tx.note ? tx.note : '' %></textarea>
+  </div>
+  <div>
+    <label class="block text-sm font-medium text-slate-700">單據圖片（選填）</label>
+    <input name="receipt" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="mt-1 w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-yellow/30 file:px-3 file:py-2 file:font-medium file:text-slate-800" />
+    <% if (tx && tx.imagePath) { %>
+    <p class="mt-2 text-xs text-slate-500">目前檔案：<a href="<%= tx.imagePath %>" class="text-brand-cyan underline" target="_blank" rel="noopener">查看</a>（上傳新圖將取代舊檔）</p>
+    <% } %>
+  </div>
+  <div class="flex flex-wrap gap-3 pt-2">
+    <button type="submit" class="rounded-xl bg-brand-pink px-5 py-2.5 font-semibold text-white shadow-md shadow-brand-pink/25 hover:brightness-110">儲存</button>
+    <a href="/transactions" class="rounded-xl border border-slate-200 px-5 py-2.5 font-medium text-slate-600 hover:bg-slate-50">取消</a>
+  </div>
+</form>
+<%- include('../partials/shell-close') %>

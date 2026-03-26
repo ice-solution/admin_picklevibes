@@ -1,0 +1,70 @@
+<%- include('partials/shell-open') %>
+<div class="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">總覽</h1>
+    <p class="text-sm text-slate-500">Profit & Loss 摘要（收入 / 支出 / 淨額）</p>
+  </div>
+  <a href="/transactions/new" class="inline-flex items-center justify-center rounded-xl bg-brand-pink px-4 py-2 text-sm font-semibold text-white shadow-md shadow-brand-pink/25 hover:brightness-110">新增紀錄</a>
+</div>
+
+<section class="grid gap-4 md:grid-cols-3">
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">本月收入</p>
+    <p class="mt-2 text-2xl font-bold text-brand-cyan"><%= month.income.toLocaleString('zh-Hant-HK', { minimumFractionDigits: 2 }) %></p>
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">本月支出</p>
+    <p class="mt-2 text-2xl font-bold text-brand-pink"><%= month.expense.toLocaleString('zh-Hant-HK', { minimumFractionDigits: 2 }) %></p>
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-2 ring-brand-yellow/40">
+    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">本月淨額</p>
+    <p class="mt-2 text-2xl font-bold <%= month.net >= 0 ? 'text-emerald-600' : 'text-red-600' %>"><%= month.net.toLocaleString('zh-Hant-HK', { minimumFractionDigits: 2 }) %></p>
+  </div>
+</section>
+
+<section class="mt-6 grid gap-4 md:grid-cols-3">
+  <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4">
+    <p class="text-xs text-slate-500">累計收入</p>
+    <p class="text-lg font-semibold text-brand-cyan"><%= allTime.income.toLocaleString('zh-Hant-HK', { minimumFractionDigits: 2 }) %></p>
+  </div>
+  <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4">
+    <p class="text-xs text-slate-500">累計支出</p>
+    <p class="text-lg font-semibold text-brand-pink"><%= allTime.expense.toLocaleString('zh-Hant-HK', { minimumFractionDigits: 2 }) %></p>
+  </div>
+  <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4">
+    <p class="text-xs text-slate-500">累計淨額</p>
+    <p class="text-lg font-semibold <%= allTime.net >= 0 ? 'text-emerald-600' : 'text-red-600' %>"><%= allTime.net.toLocaleString('zh-Hant-HK', { minimumFractionDigits: 2 }) %></p>
+  </div>
+</section>
+
+<section class="mt-10">
+  <h2 class="text-lg font-semibold text-slate-800">最近紀錄</h2>
+  <div class="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+      <thead class="bg-slate-50 text-xs font-medium uppercase text-slate-500">
+        <tr>
+          <th class="px-4 py-3">日期</th>
+          <th class="px-4 py-3">類型</th>
+          <th class="px-4 py-3">類別</th>
+          <th class="px-4 py-3 text-right">金額</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if (!recent.length) { %>
+        <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">尚無紀錄，請新增收入或支出。</td></tr>
+        <% } %>
+        <% recent.forEach(function (r) { %>
+        <tr class="hover:bg-slate-50/80">
+          <td class="whitespace-nowrap px-4 py-3 text-slate-700"><%= new Date(r.date).toLocaleDateString('zh-Hant-HK') %></td>
+          <td class="px-4 py-3">
+            <% if (r.type === 'income') { %><span class="rounded-full bg-brand-cyan/15 px-2 py-0.5 text-xs font-medium text-brand-cyan">收入</span><% } else { %><span class="rounded-full bg-brand-pink/15 px-2 py-0.5 text-xs font-medium text-brand-pink">支出</span><% } %>
+          </td>
+          <td class="px-4 py-3 text-slate-700"><%= r.category %></td>
+          <td class="px-4 py-3 text-right font-medium <%= r.type === 'income' ? 'text-brand-cyan' : 'text-brand-pink' %>"><%= r.amount.toLocaleString('zh-Hant-HK', { minimumFractionDigits: 2 }) %></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<%- include('partials/shell-close') %>
